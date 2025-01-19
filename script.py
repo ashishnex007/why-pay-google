@@ -3,7 +3,7 @@ from email.message import EmailMessage
 import os
 import time
 
-MAX_EMAIL_SIZE_MB = 24 # 25MB is max size per email, but lesgo 24
+MAX_EMAIL_SIZE_MB = 24
 MAX_EMAIL_SIZE_BYTES = MAX_EMAIL_SIZE_MB * 1024 * 1024  # Convert MB to bytes
 MAX_EMAILS_PER_HOUR = 100  # Limit on the number of emails
 
@@ -22,10 +22,10 @@ def send_photos_via_yahoo(sender_email, app_password, recipient_email, subject, 
     try:
         sent_files = load_sent_files()
 
-        # Scan folder for PNG files (change accordingly based on your photo types
+        # Scan folder for PNG files
         print(f"Scanning folder: {folder_path}")
         photos = [file_name for file_name in os.listdir(folder_path)
-                  if os.path.isfile(os.path.join(folder_path, file_name)) and file_name.lower().endswith('.png') and file_name not in sent_files] # add formats based on convenience
+                  if os.path.isfile(os.path.join(folder_path, file_name)) and file_name.lower().endswith('.png') and file_name not in sent_files]
 
         total_photos = len(photos)
         print(f"Total photos found: {total_photos}")
@@ -47,12 +47,15 @@ def send_photos_via_yahoo(sender_email, app_password, recipient_email, subject, 
                     print("Hourly email limit reached. Stopping execution.")
                     break
 
-                send_email_batch(sender_email, app_password, recipient_email, subject, body, current_batch, folder_path)
+                isSent = send_email_batch(sender_email, app_password, recipient_email, subject, body, current_batch, folder_path)
 
-                # Write sent file names to output.txt
-                with open('output.txt', 'a') as output_file:
-                    output_file.write("\n".join(current_batch) + "\n")
-                    print(f"Batch sent. File names appended to output.txt.")
+                if(isSent):
+                    # Write sent file names to output.txt
+                    with open('output.txt', 'a') as output_file:
+                        output_file.write("\n".join(current_batch) + "\n")
+                        print(f"Batch sent. File names appended to output.txt.")
+                else:
+                    print("Failed to send email. ")
 
                 # Increment email count and reset for the next batch
                 email_count += 1
@@ -67,11 +70,16 @@ def send_photos_via_yahoo(sender_email, app_password, recipient_email, subject, 
         # Send the final batch if it contains any files
         if current_batch and email_count < MAX_EMAILS_PER_HOUR:
             print(f"Sending final batch with {len(current_batch)} files...")
-            send_email_batch(sender_email, app_password, recipient_email, subject, body, current_batch, folder_path)
+            isSent = send_email_batch(sender_email, app_password, recipient_email, subject, body, current_batch, folder_path)
 
-            with open('output.txt', 'a') as output_file:
-                output_file.write("\n".join(current_batch) + "\n")
-                print(f"Final batch sent. File names appended to output.txt.")
+            if(isSent):
+                # Write sent file names to output.txt
+                with open('output.txt', 'a') as output_file:
+                    output_file.write("\n".join(current_batch) + "\n")
+                    print(f"Final batch sent. File names appended to output.txt.")
+            else:
+                print("Failed to send email. ")
+
             email_count += 1
 
         print(f"Total emails sent: {email_count}")
@@ -104,8 +112,10 @@ def send_email_batch(sender_email, app_password, recipient_email, subject, body,
             print("Sending email...")
             smtp.send_message(msg)
             print("Email sent successfully!")
+            return True
     except Exception as e:
         print(f"Failed to send email: {e}")
+        return False
 
 if __name__ == "__main__":
     sender_email = "<Your yahoo mail>"
@@ -113,6 +123,6 @@ if __name__ == "__main__":
     recipient_email = "<Your yahoo mail>"
     subject = "Check out these photos!"
     body = "Hi there, here are some photos I wanted to share with you."
-    folder_path = "."
+    folder_path = "<Your folder path>" # in case of "this" folder
 
     send_photos_via_yahoo(sender_email, app_password, recipient_email, subject, body, folder_path)

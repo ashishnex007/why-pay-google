@@ -123,6 +123,6 @@ if __name__ == "__main__":
     recipient_email = "<Your yahoo mail>"
     subject = "Check out these photos!"
     body = "Hi there, here are some photos I wanted to share with you."
-    folder_path = "<Your folder path>" # in case of "this" folder
+    folder_path = "." # in case of "this" folder
 
     send_photos_via_yahoo(sender_email, app_password, recipient_email, subject, body, folder_path)
